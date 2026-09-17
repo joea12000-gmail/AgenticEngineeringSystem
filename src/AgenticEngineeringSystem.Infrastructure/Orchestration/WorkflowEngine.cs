@@ -21,7 +21,10 @@ public sealed class WorkflowEngine
         _log = log;
     }
 
-    public async Task RunPendingWorkflowsAsync(CancellationToken cancellationToken = default)
+    // maxIterations: safety guard to prevent infinite loops if tasks keep
+    // re-appearing as Pending during processing. Defaults to a generous
+    // limit; pass a smaller value from tests if you want to assert guard behavior.
+    public async Task RunPendingWorkflowsAsync(int maxIterations = 1000, CancellationToken cancellationToken = default)
     {
         var pending = await _db.Workflows
             .Include(w => w.Tasks)
@@ -39,38 +42,68 @@ public sealed class WorkflowEngine
             // become executable as a result of other tasks running in the
             // same invocation are also handled (e.g. human tasks get
             // Blocked immediately rather than waiting for a subsequent run).
+            var iterations = 0;
             while (true)
             {
+                iterations++;
+                if (iterations > maxIterations)
+                {
+                    // safety: bail out if we exceeded the allowed iterations
+                    _log?.LogWarning("RunPendingWorkflowsAsync: reached maxIterations ({MaxIterations}) for workflow {WorkflowId}", maxIterations, wf.Id);
+                    break;
+                }
+
                 var executable = wf.Tasks
                     .Where(t => t.Status == EngineeringTaskStatus.Pending && DependenciesSatisfied(t, wf))
                     .ToList();
 
                 if (!executable.Any()) break;
 
+                var anyChange = false;
+
                 foreach (var task in executable)
                 {
                     if (task.Agent?.Contains("human", StringComparison.OrdinalIgnoreCase) == true)
                     {
-                        task.Status = EngineeringTaskStatus.Blocked;
-                        _db.AuditEvents.Add(new AuditEvent
+                        // Check whether this task has already been approved by a human.
+                        // ApproveTaskAsync records an AuditEvent with Action == "ApproveTask",
+                        // so allow execution to proceed if such an approval exists.
+                        var approved = _db.AuditEvents.Any(e => e.Action == "ApproveTask" && e.WorkflowId == wf.Id && e.Target == task.Name);
+
+                        if (!approved)
                         {
-                            WorkflowId = wf.Id,
-                            Timestamp = DateTimeOffset.UtcNow,
-                            Actor = "system",
-                            Action = "TaskAwaitingApproval",
-                            Target = task.Name,
-                            Result = "Waiting",
-                            Reason = "Requires human approval"
-                        });
-                        continue;
+                            if (task.Status != EngineeringTaskStatus.Blocked)
+                            {
+                                task.Status = EngineeringTaskStatus.Blocked;
+                                anyChange = true;
+                            }
+                            _db.AuditEvents.Add(new AuditEvent
+                            {
+                                WorkflowId = wf.Id,
+                                Timestamp = DateTimeOffset.UtcNow,
+                                Actor = "system",
+                                Action = "TaskAwaitingApproval",
+                                Target = task.Name,
+                                Result = "Waiting",
+                                Reason = "Requires human approval"
+                            });
+                            continue;
+                        }
+                        // If approved, fall through and execute the task like an automated task.
                     }
 
+                    // ExecuteTaskAsync updates the task status and persists it.
                     await ExecuteTaskAsync(task, cancellationToken);
+                    anyChange = true;
                 }
 
                 // Persist progress for this batch before re-evaluating
                 // which tasks are now executable.
                 await _db.SaveChangesAsync(cancellationToken);
+
+                // If no task's status changed in this iteration, nothing will
+                // change in subsequent iterations either; break to avoid looping.
+                if (!anyChange) break;
             }
 
             if (wf.Tasks.All(t => t.Status == EngineeringTaskStatus.Completed))
