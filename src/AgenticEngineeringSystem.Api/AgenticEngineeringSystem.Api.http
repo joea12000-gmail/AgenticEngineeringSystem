@@ -1,0 +1,6 @@
+@AgenticEngineeringSystem.Api_HostAddress = http://localhost:5133
+
+GET {{AgenticEngineeringSystem.Api_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###

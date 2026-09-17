@@ -1,0 +1,279 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Agentic Engineering System — Proof of Concept</title>
+<style>
+:root{--ink:#172033;--muted:#61708a;--line:#dbe2ec;--paper:#fff;--bg:#eef2f7;--accent:#315f9f;--accent2:#eaf1fb;--warn:#9a6412;--warnbg:#fff7e8;--bad:#9b3d3d}
+*{box-sizing:border-box} body{margin:0;background:var(--bg);font-family:Inter,Segoe UI,Arial,sans-serif;color:var(--ink);line-height:1.55}
+.page{width:min(1080px,calc(100% - 40px));margin:32px auto;background:var(--paper);box-shadow:0 14px 50px rgba(24,39,75,.12)}
+header{padding:58px 64px 48px;background:linear-gradient(135deg,#172033,#29466e);color:white}
+.kicker{text-transform:uppercase;letter-spacing:.16em;font-size:12px;opacity:.78;font-weight:700}
+h1{font-size:44px;line-height:1.05;margin:12px 0 10px;letter-spacing:-.03em}
+.subtitle{font-size:19px;opacity:.86;max-width:760px}
+.meta{display:flex;gap:10px;flex-wrap:wrap;margin-top:26px}.pill{border:1px solid rgba(255,255,255,.28);border-radius:999px;padding:6px 11px;font-size:12px}
+main{padding:42px 64px 64px}section{padding:28px 0;border-bottom:1px solid var(--line)}section:last-child{border-bottom:0}
+h2{font-size:25px;margin:0 0 16px;letter-spacing:-.02em}h3{font-size:16px;margin:0 0 8px}
+p{margin:9px 0 15px}.muted{color:var(--muted)} ul{padding-left:22px}li{margin:7px 0}
+.callout{background:var(--accent2);border-left:4px solid var(--accent);padding:16px 18px;margin:18px 0;border-radius:0 8px 8px 0}
+.diagram{display:flex;align-items:center;justify-content:center;gap:10px;flex-wrap:wrap;margin:16px 0}.node{border:1px solid var(--line);background:#f8fafc;border-radius:8px;padding:11px 15px;font-weight:650;font-size:13px}.node.accent{background:var(--accent2);border-color:#c9d9ef}.node.warn{background:var(--warnbg);border-color:#ecd3a3}.arrow{color:var(--muted);font-size:20px}
+.cards{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}.card{border:1px solid var(--line);border-radius:9px;padding:17px;background:#fbfcfe}.card p{font-size:13px;color:var(--muted);margin:0}
+table{width:100%;border-collapse:collapse;margin:14px 0 8px;font-size:14px}th,td{text-align:left;padding:11px 12px;border-bottom:1px solid var(--line)}th{background:#f5f7fa;font-size:12px;text-transform:uppercase;letter-spacing:.06em}
+pre{white-space:pre-wrap;font-family:Consolas,Monaco,monospace;font-size:13px;line-height:1.55;border-radius:9px;padding:18px;overflow:auto}.graph{background:#f7f9fc;border:1px solid var(--line)}.code{background:#172033;color:#edf2f9}
+.state{border:1px solid var(--line);border-radius:9px;overflow:hidden}.state div{display:grid;grid-template-columns:180px 1fr;padding:10px 14px;border-bottom:1px solid var(--line)}.state div:last-child{border-bottom:0}.state span{color:var(--muted);font-size:13px}
+.failure-flow{display:flex;align-items:center;justify-content:center;gap:8px;flex-wrap:wrap;margin:20px 0}.failure-flow div{border:1px solid var(--line);padding:10px 13px;border-radius:7px;background:#fafbfd;font-size:13px;font-weight:650}.failure-flow .bad{background:#fff0f0;border-color:#e4b7b7;color:var(--bad)}.warnbox{background:var(--warnbg)!important;border-color:#e8cf9d!important;color:var(--warn)}
+.scenario{border:1px solid var(--line);border-radius:9px;padding:18px;margin:12px 0}.scenario h3{color:var(--accent)}.sequence{font-size:13px;color:var(--muted);font-weight:600}
+.timeline>div,.deliverables>div{display:grid;grid-template-columns:210px 1fr;gap:20px;padding:14px 0;border-bottom:1px solid var(--line)}.timeline>div:last-child,.deliverables>div:last-child{border-bottom:0}.timeline b,.deliverables b{font-size:14px}.timeline span,.deliverables span{color:var(--muted);font-size:14px}
+.hero-quote{font-size:23px;line-height:1.35;font-weight:650;border-left:4px solid var(--accent);padding:12px 18px;margin-top:22px}
+footer{padding:20px 64px 32px;color:var(--muted);font-size:12px;border-top:1px solid var(--line)}
+@media(max-width:760px){.page{width:100%;margin:0}.page,header,main,footer{box-shadow:none}header,main,footer{padding-left:24px;padding-right:24px}h1{font-size:34px}.cards{grid-template-columns:1fr}.state div,.timeline>div,.deliverables>div{grid-template-columns:1fr;gap:4px}}
+@media print{body{background:white}.page{width:100%;margin:0;box-shadow:none}header{break-after:page}section{break-inside:avoid}a{color:inherit;text-decoration:none}}
+</style>
+</head>
+<body>
+<div class="page">
+<header>
+  <div class="kicker">Proof of Concept</div>
+  <h1>Agentic Engineering System</h1>
+  <div class="subtitle">Proof of Concept — Governed, State-aware Software Delivery</div>
+  <div class="meta"><span class="pill">.NET / C#</span><span class="pill">Controlled Autonomy</span><span class="pill">Workflow Orchestration</span><span class="pill">Human Governance</span></div>
+</header>
+<main><section><h2>Executive Summary</h2>
+    <p>This proof of concept demonstrates a governed agentic software-engineering workflow rather than simply an AI-powered URL shortener.
+    The URL shortener is the reference workload used to demonstrate how a requirement can be analyzed, architected, decomposed,
+    implemented, tested, reviewed, documented, approved, and released under controlled autonomy.</p>
+    <div class="callout"><strong>Core principle:</strong> LLM-based agents are workers inside a deterministic engineering system.
+    The orchestrator owns workflow state, dependencies, policies, approvals, retries, rollback, safe-stop behavior, and re-planning.</div>
+    </section>
+<section><h2>Architecture at a Glance</h2>
+    <div class="diagram">
+      <div class="node">Requirement</div><div class="arrow">→</div>
+      <div class="node">Requirements Agent</div><div class="arrow">→</div>
+      <div class="node">Architecture Agent</div><div class="arrow">→</div>
+      <div class="node">Task Graph</div>
+    </div>
+    <div class="diagram">
+      <div class="node accent">Implementation</div>
+      <div class="node accent">Testing</div>
+      <div class="node accent">Documentation</div>
+      <div class="node accent">Security Review</div>
+    </div>
+    <div class="diagram">
+      <div class="node">Code / QA Review</div><div class="arrow">→</div>
+      <div class="node warn">Human Approval</div><div class="arrow">→</div>
+      <div class="node">Release</div>
+    </div>
+    <p class="muted">The workflow is a dependency graph, not a simple linear pipeline. Independent work can execute concurrently;
+    downstream work waits for its required dependencies and gates.</p>
+    </section>
+<section><h2>The Reference Workload — URL Shortener</h2>
+    <p>The domain application is intentionally small. Its purpose is to provide a real, runnable system that gives the engineering
+    agents something concrete to build, modify, test, and reason about.</p>
+    <table>
+      <tr><th>Capability</th><th>Example</th></tr>
+      <tr><td>Create shortened URL</td><td><code>POST /api/urls</code></td></tr>
+      <tr><td>Redirect</td><td><code>GET /{shortCode}</code></td></tr>
+      <tr><td>Analytics</td><td><code>GET /api/urls/{shortCode}/analytics</code></td></tr>
+      <tr><td>Delete</td><td><code>DELETE /api/urls/{shortCode}</code></td></tr>
+    </table>
+    <p>Analytics can capture the short code, timestamp, IP/user agent where appropriate, and referrer. The workload need not become
+    a large product; it exists to exercise the engineering system.</p>
+    </section>
+<section><h2>Agent Responsibilities</h2>
+    <div class="cards">
+      <div class="card"><h3>Requirements</h3><p>Normalize requirements, identify functional/non-functional requirements, ambiguities, assumptions, and acceptance criteria.</p></div>
+      <div class="card"><h3>Architecture</h3><p>Produce components, APIs, data model, security considerations, and scalability considerations.</p></div>
+      <div class="card"><h3>Planning</h3><p>Decompose the design into tasks and dependencies suitable for graph execution.</p></div>
+      <div class="card"><h3>Implementation</h3><p>Modify source code within defined permissions and task boundaries.</p></div>
+      <div class="card"><h3>Testing</h3><p>Create and execute unit/integration tests and report failures as workflow events.</p></div>
+      <div class="card"><h3>Security / Review</h3><p>Evaluate changes against security and engineering policies before release.</p></div>
+      <div class="card"><h3>Documentation</h3><p>Keep architecture, decisions, testing, and operational documentation synchronized with the implementation.</p></div>
+      <div class="card"><h3>Release</h3><p>Prepare release actions while respecting human-approval boundaries.</p></div>
+    </div>
+    </section>
+<section><h2>Orchestration Model</h2>
+    <p>The orchestrator is the control plane. Agents return proposed decisions and artifacts; the orchestrator determines what is
+    allowed to execute.</p>
+    <ul>
+      <li>Maintains durable workflow state.</li>
+      <li>Evaluates task dependencies and schedules eligible work.</li>
+      <li>Enforces entry/exit gates and policy rules.</li>
+      <li>Controls retries, fallback, rollback, and safe-stop behavior.</li>
+      <li>Determines when human approval is required.</li>
+      <li>Detects upstream changes and rebuilds affected portions of the task graph.</li>
+      <li>Records an audit trail for significant actions.</li>
+    </ul>
+    <div class="callout"><strong>Design boundary:</strong> Agents do not call other agents to control the workflow. The orchestrator coordinates them.</div>
+    </section>
+<section><h2>Dependency Graph & Parallelism</h2>
+    <pre class="graph">Requirements
+    │
+    ▼
+Architecture
+    │
+    ▼
+Planning
+    │
+    ├──────────────┬──────────────┐
+    ▼              ▼              ▼
+Implementation   Documentation   Security
+    │              │              │
+    ▼              └──────┬───────┘
+Testing ──────────────────┤
+                           ▼
+                       Final Review
+                           │
+                           ▼
+                     Human Approval
+                           │
+                           ▼
+                         Release</pre>
+    <p>Documentation and other independent activities can proceed concurrently. Synchronization occurs before a dependent gate or release step.</p>
+    </section>
+<section><h2>Stateful Execution</h2>
+    <p>A workflow is persisted rather than existing only inside a single process invocation. A representative workflow record contains:</p>
+    <div class="state">
+      <div><span>Workflow</span><strong>WF-123</strong></div>
+      <div><span>Current state</span><strong>Testing</strong></div>
+      <div><span>Completed</span><strong>Requirements · Architecture · Implementation</strong></div>
+      <div><span>Failure</span><strong>Integration test #17</strong></div>
+      <div><span>Retries</span><strong>1 / 3</strong></div>
+      <div><span>Human decisions</span><strong>Architecture approved</strong></div>
+      <div><span>Artifacts</span><strong>requirements.json · architecture.md · taskgraph.json · source · tests</strong></div>
+    </div>
+    </section>
+<section><h2>Governance & Policy Guardrails</h2>
+    <p>Policies are executable controls rather than statements in documentation.</p>
+    <table>
+      <tr><th>Policy</th><th>Control</th></tr>
+      <tr><td>Production deployment</td><td>Human approval required</td></tr>
+      <tr><td>Destructive database operations</td><td>Human approval required</td></tr>
+      <tr><td>Secret access</td><td>Prohibited</td></tr>
+      <tr><td>Maximum retries</td><td>3</td></tr>
+      <tr><td>Code changes</td><td>Tests required</td></tr>
+      <tr><td>Security review</td><td>Required</td></tr>
+    </table>
+    <p>Examples of approval boundaries include production deployment, database schema changes, data deletion, authentication changes,
+    and security-policy changes.</p>
+    </section>
+<section><h2>Failure Handling</h2>
+    <div class="failure-flow">
+      <div>Execute</div><span>→</span><div>Validate</div><span>→</span><div class="bad">Failure</div><span>→</span><div>Retry</div><span>→</span><div>Fallback / Re-plan</div><span>→</span><div class="warnbox">Human Review</div>
+    </div>
+    <p>Controlled demonstrations can inject failures so retry, fallback, rollback, and safe-stop behavior is reproducible. A production
+    change that fails validation can trigger rollback and stop for human intervention.</p>
+    </section>
+<section><h2>Dynamic Re-planning</h2>
+    <p>The system must not blindly continue using a stale plan when an upstream artifact changes.</p>
+    <pre class="graph">Requirement changes
+        │
+        ▼
+Architecture potentially affected
+        │
+        ▼
+Data model / implementation affected
+        │
+        ├── Database changes
+        ├── Retention mechanism
+        ├── Tests
+        └── Documentation
+        │
+        ▼
+Re-planned task graph</pre>
+    <p>Example: changing analytics retention to 90 days can affect the architecture, data model, implementation tasks, tests, and documentation.</p>
+    </section>
+<section><h2>Auditability & Observability</h2>
+    <p>Every significant agent action produces an auditable event containing workflow context, actor, action, target, reason, result, and parent task.</p>
+    <pre class="code">{
+  "workflowId": "wf-123",
+  "timestamp": "...",
+  "agent": "ImplementationAgent",
+  "action": "modify_file",
+  "target": "UrlController.cs",
+  "reason": "Implement POST /api/urls",
+  "result": "success",
+  "parentTask": "TASK-17"
+}</pre>
+    <p>Operational metrics include workflow success rate, agent success rate, retry count, rollback count, workflow duration,
+    agent execution duration, human approval duration, and failure count.</p>
+    </section>
+<section><h2>Three Demonstration Scenarios</h2>
+    <div class="scenario"><h3>01 — Greenfield</h3><p>Start from an empty workload and provide: “Build a URL shortener supporting URL creation, redirection and analytics.”</p><p class="sequence">Requirement → Architecture → Decomposition → Parallel Execution → Tests → Review → Documentation → Approval → Release</p></div>
+    <div class="scenario"><h3>02 — Brownfield</h3><p>Start with an existing URL shortener and request: “Add expiration dates to shortened URLs.” The system should inspect the existing controller, domain model, database, repository, tests, and documentation before changing them.</p></div>
+    <div class="scenario"><h3>03 — Ambiguous Requirement</h3><p>Provide: “Make the URL shortener highly scalable and secure.” The system should identify missing targets such as throughput, availability, authentication, URL lifetime, analytics retention, abuse controls, geographic scope, and latency requirements before proceeding.</p></div>
+    </section>
+<section><h2>AI Abstraction</h2>
+    <p>The orchestration layer should be model-independent. A provider-neutral interface allows deterministic development and testing while preserving a path to a real model.</p>
+    <pre class="code">IAgentModel
+    │
+    ├── StubAgentModel      deterministic tests
+    ├── ScriptedAgentModel  controlled failure scenarios
+    └── RealAgentModel      production / live-model integration</pre>
+    <p>The stub mode can return predetermined structured results. Scripted mode can deliberately produce sequences such as failure → retry → failure → retry → success.
+    Real mode can be added without changing the orchestration layer.</p>
+    <div class="callout"><strong>POC rationale:</strong> Deterministic AI behavior makes orchestration, policy, retry, rollback, and re-planning tests repeatable.</div>
+    </section>
+<section><h2>Solution Structure</h2>
+    <pre class="tree">AgenticEngineeringSystem/
+├── Agents/
+│   ├── RequirementsAgent
+│   ├── ArchitectureAgent
+│   ├── PlanningAgent
+│   ├── ImplementationAgent
+│   ├── TestingAgent
+│   └── ReviewAgent
+├── Orchestration/
+│   ├── Workflow
+│   ├── TaskGraph
+│   ├── WorkflowState
+│   └── WorkflowExecutor
+├── AI/
+│   ├── IAgentModel
+│   ├── StubAgentModel
+│   └── RealAgentModel
+├── Governance/
+│   ├── PolicyEngine
+│   ├── ApprovalService
+│   └── AuditService
+└── URLShortener/</pre>
+    <p>A .NET implementation keeps workflow, state, governance, and the reference application in a technology stack suited to the POC's engineering focus.</p>
+    </section>
+<section><h2>Implementation & Demonstration Plan</h2>
+    <div class="timeline">
+      <div><b>Phase 1 — Foundation</b><span>URL shortener, database, APIs, basic tests; agent contracts; workflow state; dependency graph; orchestrator.</span></div>
+      <div><b>Phase 2 — Agentic System</b><span>Implementation, testing, review, documentation; approval mechanism; policy engine; retry; safe-stop; audit logging; metrics.</span></div>
+      <div><b>Phase 3 — Demonstration</b><span>Failure injection, dynamic re-planning, brownfield reasoning, ambiguous requirements, integration tests, diagrams, README, decision records, demo script.</span></div>
+    </div>
+    <p>Docker Compose can package the API, database, and orchestrator to make the demonstration reproducible.</p>
+    </section>
+<section><h2>Engineering Decisions to Document</h2>
+    <ul>
+      <li>Why the selected persistence technology is appropriate for a POC and what would change for production.</li>
+      <li>Why a custom dependency-graph orchestrator is used, including trade-offs against adopting an external workflow framework.</li>
+      <li>Why human approval is required at selected risk boundaries.</li>
+      <li>Why deterministic stub/scripted model providers are used for testing and demonstration.</li>
+      <li>Known risks, limitations, assumptions, and production considerations.</li>
+    </ul>
+    </section>
+<section><h2>POC Deliverables</h2>
+    <div class="deliverables">
+      <div><b>Runnable System</b><span>URL shortener + agentic orchestrator</span></div>
+      <div><b>Workflow Engine</b><span>State, task graph, gates, scheduling, retries, rollback, re-planning</span></div>
+      <div><b>Governance</b><span>Policies, permissions, human approval, audit trail</span></div>
+      <div><b>Test Suite</b><span>Unit, integration, orchestrator, failure-injection, policy tests</span></div>
+      <div><b>Documentation</b><span>README, architecture, orchestration, security, testing, decisions</span></div>
+      <div><b>Scenarios</b><span>Greenfield, brownfield, ambiguous requirement</span></div>
+      <div><b>Demo</b><span>10–15 minute scripted demonstration of the complete workflow</span></div>
+    </div>
+    </section>
+<section><h2>Closing Position</h2>
+    <p>This proof of concept is designed to demonstrate an engineering control plane for agentic software development.
+    The reference application proves that the system can operate on a real workload; the orchestration, governance, state,
+    observability, and re-planning capabilities demonstrate the broader engineering concept.</p>
+    <div class="hero-quote">“The LLMs are workers inside the system, not the system itself.”</div>
+    </section></main>
+<footer>Prepared as an engineering proof-of-concept overview. Scope and terminology are based on the supplied assignment planning material.</footer>
+</div>
+</body>
+</html>
