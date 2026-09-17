@@ -1,5 +1,6 @@
 using AgenticEngineeringSystem.Core.Governance;
 using AgenticEngineeringSystem.Core.UrlShortener;
+using AgenticEngineeringSystem.Infrastructure.Orchestration;
 using AgenticEngineeringSystem.Infrastructure;
 using AgenticEngineeringSystem.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
@@ -7,6 +8,8 @@ using Microsoft.EntityFrameworkCore;
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddOpenApi();
+builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddSwaggerGen();
 builder.Services.AddHealthChecks();
 builder.Services.AddAgenticEngineeringInfrastructure();
 
@@ -21,6 +24,12 @@ using (var scope = app.Services.CreateScope())
 if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();
+    app.UseSwagger();
+    app.UseSwaggerUI(options =>
+    {
+        options.SwaggerEndpoint("/swagger/v1/swagger.json", "Agentic Engineering System API v1");
+        options.RoutePrefix = "swagger";
+    });
 }
 
 app.UseHttpsRedirection();
@@ -110,6 +119,30 @@ workflows.MapGet("/", async (AgenticEngineeringDbContext dbContext, Cancellation
         .ToListAsync(cancellationToken);
 
     return Results.Ok(results);
+});
+
+// Approval endpoints for tasks that require human approval.
+workflows.MapPost("/{workflowId}/tasks/{taskId}/approve", async (
+    Guid workflowId,
+    Guid taskId,
+    string approver,
+    WorkflowEngine engine,
+    CancellationToken cancellationToken) =>
+{
+    await engine.ApproveTaskAsync(taskId, approver, cancellationToken);
+    return Results.Ok(new { taskId, approvedBy = approver });
+});
+
+workflows.MapPost("/{workflowId}/tasks/{taskId}/reject", async (
+    Guid workflowId,
+    Guid taskId,
+    string approver,
+    string reason,
+    WorkflowEngine engine,
+    CancellationToken cancellationToken) =>
+{
+    await engine.RejectTaskAsync(taskId, approver, reason, cancellationToken);
+    return Results.Ok(new { taskId, rejectedBy = approver, reason });
 });
 
 app.Run();

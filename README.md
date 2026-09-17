@@ -29,6 +29,7 @@ dotnet run --project .\src\AgenticEngineeringSystem.Api\AgenticEngineeringSystem
 Useful endpoints:
 
 - `GET /health`
+- `GET /swagger`
 - `POST /api/urls`
 - `GET /{shortCode}`
 - `GET /api/urls/{shortCode}/analytics`
