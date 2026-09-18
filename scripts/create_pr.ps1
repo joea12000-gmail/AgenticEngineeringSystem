@@ -1,45 +1,49 @@
-# PowerShell script to create a branch, commit, push, and open a PR
-# Usage: .\scripts\create_pr.ps1 -Branch feature/iterative-workflow-engine -Title 'Iteratively process executable tasks in WorkflowEngine'
-param(
-    [string]$Branch = 'feature/iterative-workflow-engine',
-    [string]$Title = 'Iteratively process executable tasks in WorkflowEngine',
-    [string]$BodyFile = 'docs/PRs/feature-iterative-workflow-engine.md',
-    [string]$Remote = 'origin'
-)
+#!/usr/bin/env pwsh
+$ErrorActionPreference = 'Stop'
 
-Set-StrictMode -Version Latest
+# Script to create a branch, commit CI files, push, and create/update a PR
+# Ensures the milestone exists (creates it if missing)
 
-# Stage changes if any
-if ((git status --porcelain) -ne '') {
-    Write-Host 'Staging changes...'
-    git add .
-}
+$branch = "ci/azure-pipelines-github-actions"
+$commitMsg = "Add CI/CD: Azure Pipelines and GitHub Actions for Azure Web App deployment"
+$prTitle = "CI/CD: Azure Pipelines + GitHub Actions for Azure Web App"
+$milestone = "Tests passing and CI/CD yaml created"
 
-# Create or switch branch
-git checkout -B $Branch
+git checkout -b $branch
+# add files
+git add azure-pipelines/azure-pipelines.yml .github/workflows/azure-webapp-deploy.yml
+git commit -m $commitMsg
+git push -u origin $branch
 
-# Commit
+# get changed files in the commit
+$changed = git show --name-only --pretty="" HEAD | Where-Object { $_ -ne '' } | ForEach-Object { " - $_" } | Out-String
+
+$prBody = @"
+This PR adds:
+
+- azure-pipelines/azure-pipelines.yml
+- .github/workflows/azure-webapp-deploy.yml
+
+Changed files:
+$changed
+
+Please replace placeholders (<your-app-service-name>, <Azure Service Connection Name>) and add the AZURE_CREDENTIALS secret for GitHub Actions.
+"@
+
+# ensure milestone exists (create if missing)
 try {
-    git commit -m $Title | Out-Null
+    gh milestone view $milestone | Out-Null
 } catch {
-    Write-Host 'No changes to commit.'
+    Write-Host "Milestone '$milestone' not found, creating..."
+    gh milestone create --title $milestone
 }
 
-# Push
-git push -u $Remote $Branch
-
-# Create PR using gh if available
-if (Get-Command gh -ErrorAction SilentlyContinue) {
-    gh pr create --title $Title --body-file $BodyFile --base main --head $Branch
-} else {
-    $repoUrl = git config --get remote.$Remote.url
-    Write-Host "gh CLI not found. Create PR manually: $repoUrl/compare/main...$Branch?expand=1"
+# create or update PR associated with current branch and assign milestone
+try {
+    gh pr view --json url -q .url | Out-Null
+    gh pr edit --title $prTitle --body $prBody --milestone $milestone
+} catch {
+    gh pr create --title $prTitle --body $prBody --label "ci" --milestone $milestone
 }
 
-# Run tests if dotnet is available
-if (Get-Command dotnet -ErrorAction SilentlyContinue) {
-    Write-Host 'Running dotnet test...'
-    dotnet test
-}
-
-Write-Host "Done. Branch: $Branch"
+Write-Host "PR created/updated. If assigning the milestone failed, ensure you have permission to create milestones in the repository."
