@@ -2,6 +2,7 @@ using AgenticEngineeringSystem.Core.Governance;
 using AgenticEngineeringSystem.Core.UrlShortener;
 using AgenticEngineeringSystem.Infrastructure.Data;
 using AgenticEngineeringSystem.Infrastructure.Services;
+using AgenticEngineeringSystem.Infrastructure.Orchestration;
 using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
@@ -24,6 +25,8 @@ public static class DependencyInjection
         services.AddSingleton(TimeProvider.System);
         services.AddScoped<IUrlShortenerService, UrlShortenerService>();
         services.AddSingleton<IPolicyEngine, PolicyEngine>();
+        // Workflow engine orchestrates task execution, approvals, and retries.
+        services.AddScoped<Infrastructure.Orchestration.WorkflowEngine>();
 
         return services;
     }

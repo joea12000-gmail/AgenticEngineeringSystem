@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Agentic Engineering System — POC</title>
+  <style>
+    body { font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial; max-width: 900px; margin: 32px auto; color:#111 }
+    pre { background:#f6f8fa; padding:12px; overflow:auto }
+    code { background:#f2f4f6; padding:2px 6px; border-radius:4px }
+    h1,h2,h3 { color:#0b5cff }
+  </style>
+</head>
+<body>
+  <h1>Agentic Engineering System — Proof of Concept</h1>
+
+  <p>This single-page artifact summarizes the POC, how it is wired, how to run it locally, and sample API calls to exercise the orchestration and URL shortener slices.</p>
+
+  <h2>Purpose</h2>
+  <p>Provide a runnable, small-surface POC demonstrating:</p>
+  <ul>
+    <li>Minimal ASP.NET Core HTTP API surface for the URL shortener and governance workflows.</li>
+    <li>Entity model and persistence using EF Core with an in-memory SQLite connection (shared open connection lifetime).</li>
+    <li>A simple WorkflowEngine prototype that evaluates task dependencies and supports human approvals.</li>
+  </ul>
+
+  <h2>Architecture (high level)</h2>
+  <p>Solution projects:</p>
+  <ul>
+    <li><code>src/AgenticEngineeringSystem.Api</code> — Minimal API host and endpoints.</li>
+    <li><code>src/AgenticEngineeringSystem.Core</code> — Domain models (ShortUrl, UrlVisit, EngineeringWorkflow, EngineeringTask), contracts and policy types.</li>
+    <li><code>src/AgenticEngineeringSystem.Infrastructure</code> — EF Core DbContext (<code>AgenticEngineeringDbContext</code>), in-memory SQLite wiring, WorkflowEngine, and services.</li>
+    <li><code>tests/AgenticEngineeringSystem.Tests</code> — MSTest tests exercising the in-memory DB and orchestrator.</li>
+  </ul>
+
+  <h2>Data model snapshot</h2>
+  <ul>
+    <li><strong>ShortUrl</strong> — original URL, ShortCode, visits relation.</li>
+    <li><strong>UrlVisit</strong> — visit metadata (IP, UA, referrer, timestamp).</li>
+    <li><strong>EngineeringWorkflow</strong> — contains a collection of EngineeringTask.</li>
+    <li><strong>EngineeringTask</strong> — has Agent, Status, and possibly dependency edges (<code>EngineeringTaskDependency</code>).</li>
+    <li><strong>AuditEvent</strong> — lightweight audit trail entries for approvals and actions.</li>
+  </ul>
+
+  <h2>EF Core + In-memory SQLite</h2>
+  <p>The POC uses a single open <code>SqliteConnection</code> with <code>Data Source=AgenticEngineeringSystem;Mode=Memory;Cache=Shared</code> opened at startup and registered as a singleton. All DbContext instances use that connection via <code>UseSqlite(connection)</code>. This keeps data available across separate DbContext instances in the same process for the POC lifetime. Tests use <code>DataSource=:memory:</code> with an open connection per test.</p>
+
+  <h2>How to run locally</h2>
+  <pre>
+  powershell
+  dotnet build AgenticEngineeringSystem.slnx
+  dotnet test AgenticEngineeringSystem.slnx
+  dotnet run --project .\src\AgenticEngineeringSystem.Api\AgenticEngineeringSystem.Api.csproj
+  </pre>
+  <p>The API binds to the default Kestrel address. Swagger UI is available at <code>/swagger</code> in Development.</p>
+
+  <h2>Useful API endpoints (POC)</h2>
+  <ul>
+    <li><code>GET /health</code></li>
+    <li><code>POST /api/urls</code> — create short URL; body: <code>{ "originalUrl": "https://example.com/article/1", "customCode": "example-1" }</code></li>
+    <li><code>GET /{shortCode}</code> — redirect to original URL (records a visit)</li>
+    <li><code>GET /api/workflows</code> — list workflows</li>
+    <li><code>POST /api/workflows/{workflowId}/tasks/{taskId}/approve</code> — approve a task requiring human approval</li>
+    <li><code>POST /api/workflows/{workflowId}/tasks/{taskId}/reject</code> — reject a task</li>
+  </ul>
+
+  <h2>Sample sequence (approval gate)</h2>
+  <ol>
+    <li>Create a workflow with two tasks: <em>taskA</em> (agent) and <em>taskB</em> (human reviewer) where taskB depends on taskA.</li>
+    <li>Run the orchestrator (background service or manual invocation) — taskA will execute immediately; taskB will be marked Blocked waiting approval.</li>
+    <li>POST to the approve endpoint for taskB — orchestrator will pick it up and execute.</li>
+  </ol>
+
+  <h2>Files added/changed in this POC</h2>
+  <ul>
+    <li><code>docs/Agentic_Engineering_System_POC.html</code> (this file)</li>
+    <li><code>src/AgenticEngineeringSystem.Infrastructure</code> — in-memory SQLite registration and DbContext.</li>
+    <li><code>tests/AgenticEngineeringSystem.Tests</code> — tests that exercise the WorkflowEngine and persistence.</li>
+  </ul>
+
+  <h2>Next steps</h2>
+  <ul>
+    <li>Integrate a real agent runner (LLM, script runner) into <code>WorkflowEngine.ExecuteTaskAsync</code>.</li>
+    <li>Add policy checks prior to execution using <code>IPolicyEngine</code>.</li>
+    <li>Add authentication/authorization for governance endpoints and protect approval APIs.</li>
+    <li>Provide a durable database provider and EF migrations for production.</li>
+  </ul>
+
+  <h2>References</h2>
+  <ul>
+    <li><a href="../README.md">README.md</a></li>
+    <li><a href="../docs/ARCHITECTURE.md">docs/ARCHITECTURE.md</a> (architecture details)</li>
+  </ul>
+</body>
+</html>
