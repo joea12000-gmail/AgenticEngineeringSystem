@@ -3,6 +3,7 @@ using AgenticEngineeringSystem.Core.UrlShortener;
 using AgenticEngineeringSystem.Infrastructure.Orchestration;
 using AgenticEngineeringSystem.Infrastructure;
 using AgenticEngineeringSystem.Infrastructure.Data;
+
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -129,7 +130,14 @@ workflows.MapPost("/{workflowId}/tasks/{taskId}/approve", async (
     WorkflowEngine engine,
     CancellationToken cancellationToken) =>
 {
-    await engine.ApproveTaskAsync(taskId, approver, cancellationToken);
+    try
+    {
+        await engine.ApproveTaskAsync(taskId, approver, cancellationToken);
+    }
+    catch (InvalidOperationException ex)
+    {
+        return Results.BadRequest(new { error = ex.Message });
+    }
     return Results.Ok(new { taskId, approvedBy = approver });
 });
 
@@ -141,7 +149,14 @@ workflows.MapPost("/{workflowId}/tasks/{taskId}/reject", async (
     WorkflowEngine engine,
     CancellationToken cancellationToken) =>
 {
-    await engine.RejectTaskAsync(taskId, approver, reason, cancellationToken);
+    try
+    {
+        await engine.RejectTaskAsync(taskId, approver, reason, cancellationToken);
+    }
+    catch (InvalidOperationException ex)
+    {
+        return Results.BadRequest(new { error = ex.Message });
+    }
     return Results.Ok(new { taskId, rejectedBy = approver, reason });
 });
 
