@@ -51,18 +51,26 @@ public sealed class WorkflowEngine
                 {
                     if (task.Agent?.Contains("human", StringComparison.OrdinalIgnoreCase) == true)
                     {
-                        task.Status = EngineeringTaskStatus.Blocked;
-                        _db.AuditEvents.Add(new AuditEvent
+                        // If the task requires human approval, check whether an approval audit event exists.
+                        var approved = await _db.AuditEvents
+                            .AnyAsync(a => a.WorkflowId == wf.Id && a.Action == "ApproveTask" && a.Target == task.Name, cancellationToken);
+
+                        if (!approved)
                         {
-                            WorkflowId = wf.Id,
-                            Timestamp = DateTimeOffset.UtcNow,
-                            Actor = "system",
-                            Action = "TaskAwaitingApproval",
-                            Target = task.Name,
-                            Result = "Waiting",
-                            Reason = "Requires human approval"
-                        });
-                        continue;
+                            task.Status = EngineeringTaskStatus.Blocked;
+                            _db.AuditEvents.Add(new AuditEvent
+                            {
+                                WorkflowId = wf.Id,
+                                Timestamp = DateTimeOffset.UtcNow,
+                                Actor = "system",
+                                Action = "TaskAwaitingApproval",
+                                Target = task.Name,
+                                Result = "Waiting",
+                                Reason = "Requires human approval"
+                            });
+
+                            continue;
+                        }
                     }
 
                     await ExecuteTaskAsync(task, cancellationToken);
