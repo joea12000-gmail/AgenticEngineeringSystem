@@ -1,6 +1,50 @@
-@AgenticEngineeringSystem.Api_HostAddress = http://localhost:5133
+@AgenticEngineeringSystem.Api_HostAddress = https://localhost:7015
 
-GET {{AgenticEngineeringSystem.Api_HostAddress}}/weatherforecast/
+GET {{AgenticEngineeringSystem.Api_HostAddress}}/api/workflows
 Accept: application/json
+
+###
+
+@shortCode=string
+GET {{AgenticEngineeringSystem.Api_HostAddress}}/{{shortCode}}
+
+###
+
+@action=string
+@target=string
+GET {{AgenticEngineeringSystem.Api_HostAddress}}/api/governance/policy?action={{action}}&target={{target}}
+
+###
+
+POST {{AgenticEngineeringSystem.Api_HostAddress}}/api/urls
+Content-Type: application/json
+
+{
+  //CreateShortUrlRequest
+}
+
+###
+
+DELETE {{AgenticEngineeringSystem.Api_HostAddress}}/api/urls/{{shortCode}}
+
+###
+
+GET {{AgenticEngineeringSystem.Api_HostAddress}}/api/urls/{{shortCode}}/analytics
+
+###
+
+GET {{AgenticEngineeringSystem.Api_HostAddress}}/api/workflows
+
+###
+
+@workflowId=string
+@taskId=string
+@approver=string
+POST {{AgenticEngineeringSystem.Api_HostAddress}}/api/workflows/{{workflowId}}/tasks/{{taskId}}/approve?approver={{approver}}
+
+###
+
+@reason=string
+POST {{AgenticEngineeringSystem.Api_HostAddress}}/api/workflows/{{workflowId}}/tasks/{{taskId}}/reject?approver={{approver}}&reason={{reason}}
 
 ###

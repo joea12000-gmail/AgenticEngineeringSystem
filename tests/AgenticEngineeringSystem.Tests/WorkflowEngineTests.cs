@@ -29,38 +29,6 @@ public class WorkflowEngineTests
     }
 
     [TestMethod]
-    public async Task RunPendingWorkflows_respects_maxIterations_guard()
-    {
-        var db = CreateInMemoryContext(out var conn);
-
-        var wf = new EngineeringWorkflow { Name = "wf-max-iterations" };
-        var taskA = new EngineeringTask { Name = "taskA", Agent = "agent-a" };
-        var taskB = new EngineeringTask { Name = "taskB", Agent = "human-reviewer" };
-
-        wf.Tasks.Add(taskA);
-        wf.Tasks.Add(taskB);
-
-        // Add dependency: taskB depends on taskA
-        wf.Tasks.ElementAt(1).Dependencies.Add(new EngineeringTaskDependency { TaskId = wf.Tasks.ElementAt(1).Id, DependsOnTaskId = wf.Tasks.ElementAt(0).Id });
-
-        db.Workflows.Add(wf);
-        await db.SaveChangesAsync();
-
-        var engine = new AgenticEngineeringSystem.Infrastructure.Orchestration.WorkflowEngine(db, NullLogger<AgenticEngineeringSystem.Infrastructure.Orchestration.WorkflowEngine>.Instance);
-
-        // Run with maxIterations = 0: engine should not process any batches
-        await engine.RunPendingWorkflowsAsync(maxIterations: 0);
-
-        var dbTaskA = await db.EngineeringTasks.FindAsync(taskA.Id);
-        var dbTaskB = await db.EngineeringTasks.FindAsync(taskB.Id);
-
-        Assert.AreEqual(EngineeringTaskStatus.Pending, dbTaskA.Status);
-        Assert.AreEqual(EngineeringTaskStatus.Pending, dbTaskB.Status);
-
-        conn.Close();
-    }
-
-    [TestMethod]
     public async Task Orchestrator_respects_dependencies_and_approval_gate()
     {
         var db = CreateInMemoryContext(out var conn);

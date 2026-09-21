@@ -9,25 +9,22 @@ public class PocFileExistsTests
     [TestMethod]
     public void Agentic_POC_Html_File_Exists()
     {
-        // Path relative to repo root when tests run from solution folder
-        var fileName = "Agentic_Engineering_System_POC.html";
-
-        // Search upward from the test assembly base directory for a docs folder containing the file.
-        var dir = new DirectoryInfo(AppContext.BaseDirectory!);
-        bool found = false;
-        string? foundPath = null;
-        while (dir != null)
+        // Try to locate the docs file by walking up the directory tree from the test's working directory
+        var fileName = Path.Combine("docs", "Agentic_Engineering_System_POC.html");
+        var dir = Directory.GetCurrentDirectory();
+        var found = false;
+        for (var i = 0; i < 6 && dir is not null; i++)
         {
-            var candidate = Path.Combine(dir.FullName, "docs", fileName);
+            var candidate = Path.Combine(dir, fileName);
             if (File.Exists(candidate))
             {
                 found = true;
-                foundPath = candidate;
                 break;
             }
-            dir = dir.Parent;
+
+            dir = Directory.GetParent(dir)?.FullName;
         }
 
-        Assert.IsTrue(found, $"Expected POC file at 'docs/{fileName}' to exist (searched up from {AppContext.BaseDirectory}). Found at: {foundPath}");
+        Assert.IsTrue(found, $"Expected POC file at '{fileName}' to exist in repository root or parent directories.");
     }
 }
