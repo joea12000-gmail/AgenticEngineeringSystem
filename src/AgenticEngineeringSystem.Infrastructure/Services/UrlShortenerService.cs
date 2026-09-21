@@ -1,5 +1,6 @@
 using AgenticEngineeringSystem.Core.UrlShortener;
 using AgenticEngineeringSystem.Infrastructure.Data;
+
 using Microsoft.EntityFrameworkCore;
 
 namespace AgenticEngineeringSystem.Infrastructure.Services;
@@ -68,15 +69,33 @@ public sealed class UrlShortenerService(AgenticEngineeringDbContext dbContext, T
 
     public async Task<UrlAnalyticsDto?> GetAnalyticsAsync(string shortCode, CancellationToken cancellationToken = default)
     {
-        return await dbContext.ShortUrls
-            .Where(url => url.ShortCode == shortCode && !url.IsDeleted)
-            .Select(url => new UrlAnalyticsDto(
-                url.ShortCode,
-                url.OriginalUrl,
-                url.Visits.Count,
-                url.CreatedAt,
-                url.Visits.OrderByDescending(visit => visit.VisitedAt).Select(visit => (DateTimeOffset?)visit.VisitedAt).FirstOrDefault()))
+        var url = await dbContext.ShortUrls
+            .Where(u => u.ShortCode == shortCode && !u.IsDeleted)
+            .Select(u => new
+            {
+                u.Id,
+                u.ShortCode,
+                u.OriginalUrl,
+                VisitsCount = u.Visits.Count,
+                u.CreatedAt
+            })
             .FirstOrDefaultAsync(cancellationToken);
+
+        if (url == null) return null;
+
+        var visitedAtList = await dbContext.UrlVisits
+            .Where(v => v.ShortUrlId == url.Id)
+            .Select(v => (DateTimeOffset?)v.VisitedAt)
+            .ToListAsync(cancellationToken);
+
+        var latestVisitedAt = visitedAtList.OrderByDescending(v => v).FirstOrDefault();
+
+        return new UrlAnalyticsDto(
+            url.ShortCode,
+            url.OriginalUrl,
+            url.VisitsCount,
+            url.CreatedAt,
+            latestVisitedAt);
     }
 
     public async Task<bool> DeleteAsync(string shortCode, CancellationToken cancellationToken = default)
