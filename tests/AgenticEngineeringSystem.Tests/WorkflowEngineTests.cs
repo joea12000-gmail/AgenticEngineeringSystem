@@ -53,14 +53,14 @@ public class WorkflowEngineTests
         var dbTaskA = await db.EngineeringTasks.FindAsync(taskA.Id);
         var dbTaskB = await db.EngineeringTasks.FindAsync(taskB.Id);
 
-        Assert.AreEqual(EngineeringTaskStatus.Completed, dbTaskA.Status);
-        Assert.AreEqual(EngineeringTaskStatus.Blocked, dbTaskB.Status);
+        Assert.AreEqual(EngineeringTaskStatus.Completed, dbTaskA?.Status);
+        Assert.AreEqual(EngineeringTaskStatus.Blocked, dbTaskB?.Status);
 
         await engine.ApproveTaskAsync(taskB.Id, "tester");
         await engine.RunPendingWorkflowsAsync();
 
         dbTaskB = await db.EngineeringTasks.FindAsync(taskB.Id);
-        Assert.AreEqual(EngineeringTaskStatus.Completed, dbTaskB.Status);
+        Assert.AreEqual(EngineeringTaskStatus.Completed, dbTaskB?.Status);
 
         conn.Close();
     }
