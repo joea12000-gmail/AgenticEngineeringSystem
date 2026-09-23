@@ -1,0 +1,6 @@
+services:
+  agenticengineeringsystem.api:
+    image: ${DOCKER_REGISTRY-}agenticengineeringsystemapi
+    build:
+      context: .
+      dockerfile: src/AgenticEngineeringSystem.Api/Dockerfile
