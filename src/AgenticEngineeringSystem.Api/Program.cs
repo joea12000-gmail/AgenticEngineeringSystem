@@ -1,8 +1,8 @@
 using AgenticEngineeringSystem.Core.Governance;
 using AgenticEngineeringSystem.Core.UrlShortener;
-using AgenticEngineeringSystem.Infrastructure.Orchestration;
 using AgenticEngineeringSystem.Infrastructure;
 using AgenticEngineeringSystem.Infrastructure.Data;
+using AgenticEngineeringSystem.Infrastructure.Orchestration;
 
 using Microsoft.EntityFrameworkCore;
 
@@ -10,7 +10,7 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddOpenApi();
 builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
+builder.Services.AddSwaggerGen(options => options.SchemaFilter<CreateShortUrlRequestSchemaFilter>());
 builder.Services.AddHealthChecks();
 builder.Services.AddAgenticEngineeringInfrastructure();
 
@@ -161,5 +161,3 @@ workflows.MapPost("/{workflowId}/tasks/{taskId}/reject", async (
 });
 
 app.Run();
-
-public partial class Program;
